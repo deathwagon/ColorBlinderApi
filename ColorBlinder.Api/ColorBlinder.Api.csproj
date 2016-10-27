@@ -140,7 +140,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="App_Data\" />
+    <Folder Include="Captures\" />
     <Folder Include="Models\" />
   </ItemGroup>
   <PropertyGroup>

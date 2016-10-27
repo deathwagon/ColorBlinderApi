@@ -28,19 +28,16 @@ namespace ColorBlinder.Api.Controllers
         var basePath = HttpContext.Current.Server.MapPath($"~/Captures/{requestGuid}");
         Directory.CreateDirectory(basePath);
 
-        var originalScreenCapture = ((ITakesScreenshot)driver).GetScreenshot();
-        originalScreenCapture.SaveAsFile($"{basePath}/original.png", ImageFormat.Png);
-
         var colorBlindRenderer = new ColorBlindRenderer(driver);
         foreach(ColorBlindTypes colorBlindType in Enum.GetValues(typeof(ColorBlindTypes)))
         {
           var afterScreenCapture = colorBlindRenderer.ColorBlindInizePage(colorBlindType);
-          afterScreenCapture.SaveAsFile($"{basePath}/{colorBlindType}.png", ImageFormat.Png);
+          afterScreenCapture.Save($"{basePath}/{colorBlindType}.png", ImageFormat.Png);
         }
       }
 
       return new JObject(
-        new JProperty("original", PathBuilder(requestGuid, "original.png")),
+        new JProperty("original", PathBuilder(requestGuid, $"{ColorBlindTypes.Normal}.png")),
         new JProperty($"{ColorBlindTypes.Achromatomaly}", PathBuilder(requestGuid, $"{ColorBlindTypes.Achromatomaly}.png")),
         new JProperty($"{ColorBlindTypes.Achromatopsia}", PathBuilder(requestGuid, $"{ColorBlindTypes.Achromatopsia}.png")),
         new JProperty($"{ColorBlindTypes.Deuteranomaly}", PathBuilder(requestGuid, $"{ColorBlindTypes.Deuteranomaly}.png")),

@@ -32,27 +32,33 @@ namespace ColorBlinder.Api.Controllers
         originalScreenCapture.SaveAsFile($"{basePath}/original.png", ImageFormat.Png);
 
         var colorBlindRenderer = new ColorBlindRenderer(driver);
-        colorBlindRenderer.ColorBlindInizePage(ColorBlindTypes.Tritanomaly);
-
-        var afterScreenCapture = ((ITakesScreenshot)driver).GetScreenshot();
-        afterScreenCapture.SaveAsFile($"{basePath}/filter.png", ImageFormat.Png);
+        foreach(ColorBlindTypes colorBlindType in Enum.GetValues(typeof(ColorBlindTypes)))
+        {
+          var afterScreenCapture = colorBlindRenderer.ColorBlindInizePage(colorBlindType);
+          afterScreenCapture.SaveAsFile($"{basePath}/{colorBlindType}.png", ImageFormat.Png);
+        }
       }
 
-      UriBuilder uriOriginalBuilder = new UriBuilder(Request.RequestUri.Scheme, Request.RequestUri.Host);
-      uriOriginalBuilder.Port = Request.RequestUri.Port;
-      uriOriginalBuilder.Path = $"captures/{requestGuid}/original.png";
+      return new JObject(
+        new JProperty("original", PathBuilder(requestGuid, "original.png")),
+        new JProperty($"{ColorBlindTypes.Achromatomaly}", PathBuilder(requestGuid, $"{ColorBlindTypes.Achromatomaly}.png")),
+        new JProperty($"{ColorBlindTypes.Achromatopsia}", PathBuilder(requestGuid, $"{ColorBlindTypes.Achromatopsia}.png")),
+        new JProperty($"{ColorBlindTypes.Deuteranomaly}", PathBuilder(requestGuid, $"{ColorBlindTypes.Deuteranomaly}.png")),
+        new JProperty($"{ColorBlindTypes.Deuteranopia}", PathBuilder(requestGuid, $"{ColorBlindTypes.Deuteranopia}.png")),
+        new JProperty($"{ColorBlindTypes.Protanomaly}", PathBuilder(requestGuid, $"{ColorBlindTypes.Protanomaly}.png")),
+        new JProperty($"{ColorBlindTypes.Protanopia}", PathBuilder(requestGuid, $"{ColorBlindTypes.Protanopia}.png")),
+        new JProperty($"{ColorBlindTypes.Tritanomaly}", PathBuilder(requestGuid, $"{ColorBlindTypes.Tritanomaly}.png")),
+        new JProperty($"{ColorBlindTypes.Tritanopia}", PathBuilder(requestGuid, $"{ColorBlindTypes.Tritanopia}.png"))
+      );
+    }
 
+    private string PathBuilder(string guid, string fileName)
+    {
       UriBuilder uriFilterBuilder = new UriBuilder(Request.RequestUri.Scheme, Request.RequestUri.Host);
       uriFilterBuilder.Port = Request.RequestUri.Port;
-      uriFilterBuilder.Path = $"captures/{requestGuid}/filter.png";
+      uriFilterBuilder.Path = $"captures/{guid}/{fileName}";
 
-      var originalUrl = uriOriginalBuilder.ToString();
-      var filterUrl = uriFilterBuilder.ToString();
-
-      return new JObject(
-        new JProperty("original", originalUrl),
-        new JProperty("filterOne", filterUrl)
-      );
+      return uriFilterBuilder.ToString();
     }
   }
 }

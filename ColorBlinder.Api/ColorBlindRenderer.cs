@@ -27,7 +27,7 @@ namespace ColorBlinder.Api
       }
     }
 
-    public void ColorBlindInizePage(ColorBlindTypes colorBlindType)
+    public Screenshot ColorBlindInizePage(ColorBlindTypes colorBlindType)
     {
       StringBuilder assembledScript = new StringBuilder();
       assembledScript.Append(_colorBlindScript);
@@ -35,6 +35,8 @@ namespace ColorBlinder.Api
  
       IJavaScriptExecutor js = _chromeDriver;
       js.ExecuteScript(assembledScript.ToString());
+
+      return ((ITakesScreenshot)_chromeDriver).GetScreenshot();
     }
   }
 }

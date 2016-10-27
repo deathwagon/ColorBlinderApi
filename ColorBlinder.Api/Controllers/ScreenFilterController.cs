@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Web;
 using System.Web.Http;
+using ColorBlinder.Api.Models;
 using Newtonsoft.Json.Linq;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -29,16 +30,28 @@ namespace ColorBlinder.Api.Controllers
 
         var originalScreenCapture = ((ITakesScreenshot)driver).GetScreenshot();
         originalScreenCapture.SaveAsFile($"{basePath}/original.png", ImageFormat.Png);
+
+        var colorBlindRenderer = new ColorBlindRenderer(driver);
+        colorBlindRenderer.ColorBlindInizePage(ColorBlindTypes.Tritanomaly);
+
+        var afterScreenCapture = ((ITakesScreenshot)driver).GetScreenshot();
+        afterScreenCapture.SaveAsFile($"{basePath}/filter.png", ImageFormat.Png);
       }
 
-      UriBuilder uriBuilder = new UriBuilder(Request.RequestUri.Scheme, Request.RequestUri.Host);
-      uriBuilder.Port = Request.RequestUri.Port;
-      uriBuilder.Path = $"captures/{requestGuid}/original.png";
+      UriBuilder uriOriginalBuilder = new UriBuilder(Request.RequestUri.Scheme, Request.RequestUri.Host);
+      uriOriginalBuilder.Port = Request.RequestUri.Port;
+      uriOriginalBuilder.Path = $"captures/{requestGuid}/original.png";
 
-      var originalUrl = uriBuilder.ToString();
+      UriBuilder uriFilterBuilder = new UriBuilder(Request.RequestUri.Scheme, Request.RequestUri.Host);
+      uriFilterBuilder.Port = Request.RequestUri.Port;
+      uriFilterBuilder.Path = $"captures/{requestGuid}/filter.png";
+
+      var originalUrl = uriOriginalBuilder.ToString();
+      var filterUrl = uriFilterBuilder.ToString();
 
       return new JObject(
-        new JProperty("original", originalUrl)  
+        new JProperty("original", originalUrl),
+        new JProperty("filterOne", filterUrl)
       );
     }
   }

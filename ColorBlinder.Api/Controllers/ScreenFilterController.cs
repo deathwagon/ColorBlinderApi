@@ -32,16 +32,11 @@ namespace ColorBlinder.Api.Controllers
         var basePath = HttpContext.Current.Server.MapPath($"~/Captures/{requestGuid}");
         Directory.CreateDirectory(basePath);
 
-        var originalScreenCapture = ((ITakesScreenshot)driver).GetScreenshot();
-        originalScreenCapture.SaveAsFile($"{basePath}/original.png", ImageFormat.Png);
-
-        results.Add(new JProperty("original", ReturnDataBuilder(requestGuid, "original.png")));
-
         var colorBlindRenderer = new ColorBlindRenderer(driver);
         foreach (ColorBlindTypes colorBlindType in Enum.GetValues(typeof(ColorBlindTypes)))
         {
           var afterScreenCapture = colorBlindRenderer.ColorBlindInizePage(colorBlindType);
-          afterScreenCapture.SaveAsFile($"{basePath}/{colorBlindType}.png", ImageFormat.Png);
+          afterScreenCapture.Save($"{basePath}/{colorBlindType}.png", ImageFormat.Png);
 
           results.Add(new JProperty($"{colorBlindType}", ReturnDataBuilder(requestGuid, $"{colorBlindType}.png")));
         }

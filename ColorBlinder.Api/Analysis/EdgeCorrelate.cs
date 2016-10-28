@@ -15,15 +15,22 @@ namespace ColorBlinder.Api.Analysis
     {
       var results = new Dictionary<ColorBlindTypes, double>(Enum.GetNames(typeof(ColorBlindTypes)).Count());
 
-      var originalFile = Path.Combine(folder, "original.png");
+      var originalFile = Path.Combine(folder, "Normal.png");
       var files = Directory.GetFiles(folder, "*.png");
       var originalEdges = DetectEdges(originalFile);
       foreach (var file in files.Where(f => f != originalFile))
       {
-        var type = (ColorBlindTypes) Enum.Parse(typeof(ColorBlindTypes), Path.GetFileNameWithoutExtension(file), true);
-        var edges = DetectEdges(file);
-        var score = CompareEdgesTemplateMatch(edges, originalEdges, file);
-        results.Add(type, score);
+        try
+        {
+          var type = (ColorBlindTypes)Enum.Parse(typeof(ColorBlindTypes), Path.GetFileNameWithoutExtension(file), true);
+          var edges = DetectEdges(file);
+          var score = CompareEdgesTemplateMatch(edges, originalEdges, file);
+          results.Add(type, score);
+        }
+        catch
+        {
+          // TODO: Error reporting
+        }
       }
 
       return results;
@@ -50,7 +57,7 @@ namespace ColorBlinder.Api.Analysis
 
     private static Image<Bgr, byte> DetectEdges(string imagePath)
     {
-      var image = new Image<Bgr, byte>(imagePath);
+      var image = new Image<Bgr, byte>(imagePath).Resize(0.5, Inter.Linear);
       var edges = new Image<Bgr, byte>(image.Width, image.Height);
       CvInvoke.Canny(image, edges, 180d, 120d);
       var saveDir = Path.Combine(Path.GetDirectoryName(imagePath), "edges");

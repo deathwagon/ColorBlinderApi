@@ -164,6 +164,7 @@
     </Content>
     <Content Include="OpenTK.dll.config" />
     <None Include="Properties\PublishProfiles\Local Publish.pubxml" />
+    <None Include="Properties\PublishProfiles\local.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

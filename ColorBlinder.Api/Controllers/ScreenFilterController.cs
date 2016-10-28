@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Threading;
@@ -24,6 +25,7 @@ namespace ColorBlinder.Api.Controllers
       using (var driver = new ChromeDriver())
       {
         driver.Navigate().GoToUrl(new Uri(url, UriKind.Absolute));
+        driver.Manage().Window.Size = new Size(1920, 1080);
 
         Thread.Sleep(4000);
 

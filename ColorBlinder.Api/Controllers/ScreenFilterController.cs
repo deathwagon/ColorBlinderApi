@@ -8,6 +8,7 @@ using ColorBlinder.Api.Models;
 using Newtonsoft.Json.Linq;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using ColorBlinder.Api.Analysis;
 
 namespace ColorBlinder.Api.Controllers
 {
@@ -18,47 +19,49 @@ namespace ColorBlinder.Api.Controllers
     public JObject GetScreenCaptures(string url)
     {
       var requestGuid = Guid.NewGuid().ToString();
+      var results = new JObject();
 
       using (var driver = new ChromeDriver())
       {
         driver.Navigate().GoToUrl(new Uri(url, UriKind.Absolute));
 
         Thread.Sleep(4000);
-        
+
         var basePath = HttpContext.Current.Server.MapPath($"~/Captures/{requestGuid}");
         Directory.CreateDirectory(basePath);
 
         var originalScreenCapture = ((ITakesScreenshot)driver).GetScreenshot();
         originalScreenCapture.SaveAsFile($"{basePath}/original.png", ImageFormat.Png);
 
+        results.Add(new JProperty("original", ReturnDataBuilder(requestGuid, "original.png")));
+
         var colorBlindRenderer = new ColorBlindRenderer(driver);
-        foreach(ColorBlindTypes colorBlindType in Enum.GetValues(typeof(ColorBlindTypes)))
+        foreach (ColorBlindTypes colorBlindType in Enum.GetValues(typeof(ColorBlindTypes)))
         {
           var afterScreenCapture = colorBlindRenderer.ColorBlindInizePage(colorBlindType);
           afterScreenCapture.SaveAsFile($"{basePath}/{colorBlindType}.png", ImageFormat.Png);
+
+          results.Add(new JProperty($"{colorBlindType}", ReturnDataBuilder(requestGuid, $"{colorBlindType}.png")));
+        }
+
+        var scores = EdgeCorrelate.GetScores(basePath);
+        foreach (var score in scores)
+        {
+          var returnData = (JObject) results[score.Key.ToString()];
+          returnData.Add("score", score.Value);
         }
       }
 
-      return new JObject(
-        new JProperty("original", PathBuilder(requestGuid, "original.png")),
-        new JProperty($"{ColorBlindTypes.Achromatomaly}", PathBuilder(requestGuid, $"{ColorBlindTypes.Achromatomaly}.png")),
-        new JProperty($"{ColorBlindTypes.Achromatopsia}", PathBuilder(requestGuid, $"{ColorBlindTypes.Achromatopsia}.png")),
-        new JProperty($"{ColorBlindTypes.Deuteranomaly}", PathBuilder(requestGuid, $"{ColorBlindTypes.Deuteranomaly}.png")),
-        new JProperty($"{ColorBlindTypes.Deuteranopia}", PathBuilder(requestGuid, $"{ColorBlindTypes.Deuteranopia}.png")),
-        new JProperty($"{ColorBlindTypes.Protanomaly}", PathBuilder(requestGuid, $"{ColorBlindTypes.Protanomaly}.png")),
-        new JProperty($"{ColorBlindTypes.Protanopia}", PathBuilder(requestGuid, $"{ColorBlindTypes.Protanopia}.png")),
-        new JProperty($"{ColorBlindTypes.Tritanomaly}", PathBuilder(requestGuid, $"{ColorBlindTypes.Tritanomaly}.png")),
-        new JProperty($"{ColorBlindTypes.Tritanopia}", PathBuilder(requestGuid, $"{ColorBlindTypes.Tritanopia}.png"))
-      );
+      return results;
     }
 
-    private string PathBuilder(string guid, string fileName)
+    private JObject ReturnDataBuilder(string guid, string fileName)
     {
       UriBuilder uriFilterBuilder = new UriBuilder(Request.RequestUri.Scheme, Request.RequestUri.Host);
       uriFilterBuilder.Port = Request.RequestUri.Port;
       uriFilterBuilder.Path = $"captures/{guid}/{fileName}";
 
-      return uriFilterBuilder.ToString();
+      return new JObject(new JProperty("url", uriFilterBuilder.ToString()));
     }
   }
 }
